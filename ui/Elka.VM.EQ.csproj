@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>ElkaVmEq</AssemblyName>
+    <RootNamespace>Elka.VM.EQ</RootNamespace>
+    <Version>0.3.1</Version>
+    <Company>ElkaSoft</Company>
+    <Product>Elka VM EQ</Product>
+    <Description>Standalone VoiceMeeter EQ controller with optional spectrum analyzer</Description>
+    <ApplicationManifest>../src/app.manifest</ApplicationManifest>
+    <NativeRoot>$(MSBuildProjectDirectory)\..</NativeRoot>
+    <NativeCMake Condition="'$(NativeCMake)'=='' and Exists('$(ProgramW6432)\Microsoft Visual Studio\18\Insiders\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe')">$(ProgramW6432)\Microsoft Visual Studio\18\Insiders\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe</NativeCMake>
+    <NativeCMake Condition="'$(NativeCMake)'==''">cmake</NativeCMake>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="../build/$(Configuration)/ElkaEqEngine.dll" Link="ElkaEqEngine.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="BuildNativeEngine" BeforeTargets="PrepareForBuild" Condition="'$(SkipNativeBuild)'!='true' and '$(DesignTimeBuild)'!='true'">
+    <Exec Command="&quot;$(NativeCMake)&quot; -S &quot;$(NativeRoot)&quot; -B &quot;$(NativeRoot)\build&quot; -G &quot;Visual Studio 18 2026&quot; -A x64" />
+    <Exec Command="&quot;$(NativeCMake)&quot; --build &quot;$(NativeRoot)\build&quot; --config $(Configuration) --target ElkaEqEngine" />
+  </Target>
+</Project>

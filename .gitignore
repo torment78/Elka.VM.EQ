@@ -1,0 +1,11 @@
+/build/
+/artifacts/
+/.vs/
+*.user
+**/bin/
+**/obj/
+*.pubxml.user
+*.pfx
+*.p12
+.env
+.env.*

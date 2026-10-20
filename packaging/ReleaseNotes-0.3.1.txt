@@ -1,0 +1,27 @@
+Elka VM EQ 0.3.1 - first public portable/installer release
+
+Downloads
+- Portable-win-x64.zip: extract, then run ElkaVmEq.exe.
+- Setup-x64.exe: per-user Inno Setup installer with Start menu shortcut and optional desktop shortcut.
+- SHA256SUMS-0.3.1.txt: checksums for both packages.
+
+The app is now one self-contained EXE. No separate .NET runtime installation,
+ElkaEqEngine.dll or runtimeconfig.json is needed beside it. Native components
+extract automatically to Windows' temporary .net cache on launch. The portable
+ZIP also includes a README and Microsoft runtime license/notice files.
+
+Requires Windows 10/11 x64 and separately installed VoiceMeeter. Potato supports
+input and bus six-band EQ; Banana supports bus EQ. This is a VoiceMeeter controller,
+not an independent audio-processing engine. VoiceMeeter's DLLs are not bundled.
+
+Existing EQ controls and sound-processing behavior are unchanged. The optional
+RTA remains off by default. Close competing callback applications before enabling
+it, and turn it off before reopening them. Post-master monitoring is a complete
+bus mix; the input-strip callback tap is not documented as post-strip-EQ.
+
+Validation: native offline suites, 52 WPF integration checks, isolated single-EXE
+startup/rendering, installer payload hashes and installation/uninstallation.
+No live audio callbacks were opened for this packaging release. Live audio level
+and listening verification remain separate from the offline checks.
+
+These downloads are unsigned. Windows may display an unknown-publisher warning.

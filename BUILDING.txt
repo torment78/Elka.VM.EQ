@@ -1,0 +1,52 @@
+ELKA VM EQ - DEVELOPER NOTES
+
+Requirements: Windows x64, .NET 8 SDK 8.0.426 or newer 8.0 feature band,
+Visual Studio 2026 C++ desktop tools and CMake, and Inno Setup 6.
+Open Elka.VM.EQ.slnx for the WPF startup project and native C engine.
+The original C/GDI executable is retained for development, not shipped as the
+current user-facing release. Source and user data from other Elka apps are not
+needed for this repository.
+
+Build and offline tests:
+  powershell -NoProfile -File scripts/build.ps1
+The script refreshes the CMake compiler cache to handle Visual Studio updates.
+It runs native CTest suites and the WPF --self-test. No live callback is opened.
+
+Self-contained portable ZIP and installer:
+  powershell -NoProfile -File scripts/package-release.ps1
+Use -SkipBuild only after a successful current build/test run.
+Optional -InnoCompiler points to ISCC.exe if it is not in the default location.
+Output: artifacts/releases/v<VERSION>/ (excluded from Git).
+The staging directory must not already exist; preserve prior artifacts and
+bump the version or deliberately move the old staging directory before retrying.
+
+Portable publish uses ui/Properties/PublishProfiles/Portable.pubxml. It bundles
+the Windows x64 .NET runtime, WPF and ElkaEqEngine.dll in one EXE. Trimming is
+disabled for WPF. Native components extract into the Windows temporary cache.
+The ZIP also contains README.txt and notices from the exact restored Microsoft
+runtime packages. No VoiceMeeter binaries are distributed.
+
+Validate the final single EXE with --self-test and an offline --render.
+Use a separate bundle extraction directory to verify native components load
+from the bundle rather than adjacent DLLs. Test installer installation, payload
+hashes, offline app startup and uninstallation in a dedicated validation folder.
+Only publish ZIP and installer assets after these checks pass. Publish the
+generated SHA256SUMS file alongside them. Authenticode signing is not configured.
+
+Diagnostics:
+  ElkaVmEq.exe --demo              Offline controls, no VoiceMeeter connection.
+  ElkaVmEq.exe --render image.png  Offline screenshot.
+  ElkaVmEq.exe --self-test         Offline integration report beside the EXE.
+  ElkaVmEq.exe --probe             Read-only VoiceMeeter parameter probe.
+  ElkaVmEq.exe --spectrum-probe    LIVE callback test; requires explicit consent
+                                 and competing callback software closed.
+The native live callback was connected/released with silent A1 during earlier
+development. That does not establish live audio level or listening validation.
+Do not claim otherwise based on offline FFT or pass-through tests.
+
+References:
+https://learn.microsoft.com/dotnet/core/deploying/single-file/overview
+https://jrsoftware.org/isinfo.php
+https://github.com/vburel2018/Voicemeeter-SDK
+https://download.vb-audio.com/Download_CABLE/VoicemeeterRemoteAPI.pdf
+https://www.w3.org/TR/audio-eq-cookbook/
