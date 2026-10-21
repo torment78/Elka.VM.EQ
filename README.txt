@@ -1,4 +1,4 @@
-ELKA VM EQ - 0.3.1
+ELKA VM EQ - 0.3.2
 Standalone Windows x64 VoiceMeeter EQ controller by ElkaSoft.
 
 DOWNLOAD
@@ -18,7 +18,7 @@ not a completely zero-footprint application. No audio is recorded to disk.
 The app does not create an installer entry when run from the portable ZIP.
 
 INSTALLER
-Run Elka-VM-EQ-0.3.1-Setup-x64.exe. It installs for the current user under:
+Run the included Elka-VM-EQ-*-Setup-x64.exe. It installs for the current user under:
 %LOCALAPPDATA%\Programs\ElkaSoft\Elka VM EQ
 A Start menu shortcut is included; a desktop shortcut is optional.
 Remove it through Windows Installed apps. No separate runtime download is needed.
@@ -42,6 +42,17 @@ All links the EQ channels; numbered channel buttons edit a single channel.
 A/B selects VoiceMeeter's own EQ bank. EQ ON/OFF preserves your values.
 Solo curve changes only the drawing, not the audio routing.
 Drag the title area to move; drag the window edge to resize proportionally.
+
+LIVE LEVEL
+The header shows the selected strip's pre-fader level or the bus output level
+in dBFS. All uses the loudest channel; a numbered button selects that channel.
+It works with RTA off. A dash means unavailable; minus infinity means silence.
+Voice and music spectrum components normally sit below the overall live level.
+
+OPTIONAL SUPPORT
+The compact orange heart / Donate button in the app footer and installer opens
+https://ko-fi.com/msffixit in your browser. Donation is optional; no browser is
+opened automatically and no audio settings are changed by this button.
 
 OPTIONAL RTA
 RTA is OFF at startup. Close ElkaFX and any competing callback application before

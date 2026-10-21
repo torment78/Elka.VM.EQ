@@ -27,6 +27,7 @@ public partial class MainWindow : Window
         _demo = demo; _engine = Native.Open(demo);
         try { InitializeComponent(); }
         catch { _engine.Dispose(); throw; }
+        Icon = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/ElkaVmEq.png"));
         _refreshing = true; KindBox.SelectedIndex = 0; RangeBox.ItemsSource = DbScale.Presets.Select(s => s.Label).ToArray(); RangeBox.SelectedIndex = 0; _refreshing = false;
         string[] names = ["Bell / Peak", "Notch", "Band pass", "Low pass", "High pass", "Low shelf", "High shelf"];
         for (int type = 0; type < 7; type++)
@@ -69,6 +70,7 @@ public partial class MainWindow : Window
         if (_closed) return; var next = Native.Snapshot(_engine);
         if (force || !next.Same(_frame)) { _frame = next; Refresh(); }
         PollSpectrum();
+        PollLiveLevel();
     }
     private void Refresh()
     {
@@ -120,6 +122,7 @@ public partial class MainWindow : Window
         }
         finally { _refreshing = false; }
         UpdateSpectrumSources();
+        PollLiveLevel();
         static string names(int type) => type switch { 0 => "BELL", 1 => "NOTCH", 2 => "BAND PASS", 3 => "LOW PASS", 4 => "HIGH PASS", 5 => "LOW SHELF", _ => "HIGH SHELF" };
     }
     private void SetDragging(bool dragging) { if (!_engine.IsClosed) Native.Dragging(_engine, dragging ? 1 : 0); }

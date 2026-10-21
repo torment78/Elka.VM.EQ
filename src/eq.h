@@ -3,6 +3,13 @@
 enum { EQ_STRIP, EQ_BUS };
 enum { EQ_ON, EQ_TYPE, EQ_FREQ, EQ_GAIN, EQ_Q, EQ_FIELDS };
 typedef struct { float v[EQ_FIELDS]; } EqBand;
+/* Metering is independent of EQ snapshots/drag locks. Values are linear peak
+   amplitudes from VBVMR_GetLevel, not gain-fader settings or FFT bins. */
+typedef struct {
+ int edition,kind,index,channels,valid_mask;
+ unsigned sequence,age_ms;
+ float values[8];
+} EqLevels;
 typedef struct {
  int edition,kind,index,channels,ready,enabled,bank;
  unsigned long version;

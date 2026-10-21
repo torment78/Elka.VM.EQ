@@ -10,6 +10,8 @@
 typedef void* EqEngine;
 EQ_API int __cdecl ElkaEq_AbiVersion(void);
 EQ_API int __cdecl ElkaEq_FrameSize(void);
+EQ_API int __cdecl ElkaEq_LevelsSize(void);
+EQ_API int __cdecl ElkaEq_ReadLevels(EqEngine engine,EqLevels* frame,int bytes);
 EQ_API int __cdecl ElkaEq_SpectrumFrameSize(void);
 EQ_API int __cdecl ElkaEq_SpectrumRequest(EqEngine engine,int enabled,int kind,int index,int channel);
 EQ_API int __cdecl ElkaEq_SpectrumRead(EqEngine engine,SpecFrame* frame,int bytes);

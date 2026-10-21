@@ -1,4 +1,4 @@
-ELKA VM EQ HYBRID - 0.3.1 preview
+ELKA VM EQ HYBRID - 0.3.2
 
 A standalone EQ controller with a native C backend and WPF interface.
 The interface uses retained vector graphics and GPU acceleration when WPF
@@ -21,6 +21,13 @@ Standard does not expose this six-band EQ. Unsupported EQ controls are disabled.
 Selecting an EQ only reads it; opening the app does not reset your settings.
 
 CONTROLS
+LIVE LEVEL in the header follows the selected EQ target. Input strips use the
+API's pre-fader level (not a documented pre-EQ tap); buses use output level.
+All shows the maximum across the target's channels, while numbered channel
+buttons select that channel. Values are current peak amplitude in dBFS, with no
+peak hold. Digital silence shows -infinity; unavailable/stale readings show a
+dash. Metering is independent of RTA and needs no audio callback.
+
 Select one of the six bands, then drag its point or the Frequency/Gain/Q knobs.
 Scroll to adjust; hold Shift for fine adjustment. Scroll over the graph for Q.
 Double-click a knob to reset its value; double-click a point to reset its band.

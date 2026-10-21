@@ -30,6 +30,18 @@ internal static class SelfTest
             using (var engine = Native.Open(true))
             {
                 var frame = Native.Snapshot(engine); Check(frame.Ready == 1 && frame.Channels == 2, "C ABI / managed frame layout");
+                Check(Native.LevelsSize() == 60 && Native.ReadLevels(engine, out var noLevels, Native.LevelsBytes) == 1 && noLevels.ValidMask == 0, "meter ABI and demo has no fabricated audio");
+                var meter = new LevelFrame { Edition = frame.Edition, Kind = frame.Kind, Index = frame.Index, Channels = 2, ValidMask = 3, Values = new float[] { .1f, (float)Math.Pow(10, -6.0 / 20), 0, 0, 0, 0, 0, 0 } };
+                Check(LevelDisplay.Format(meter, frame, -1) == "−6.0", "all-channel maximum and peak-amplitude conversion");
+                Check(LevelDisplay.Format(meter, frame, 0) == "−20.0", "individual left channel");
+                Check(LevelDisplay.Format(meter, frame, 1) == "−6.0", "individual right channel");
+                meter.Values[0] = meter.Values[1] = 0; Check(LevelDisplay.Format(meter, frame, -1) == "−∞", "digital silence is minus infinity");
+                meter.Values[1] = 2; Check(LevelDisplay.Format(meter, frame, -1) == "+6.0", "above-zero dBFS is not clamped");
+                meter.Values[1] = 1; Check(LevelDisplay.Format(meter, frame, -1) == "0.0", "unity amplitude is zero dBFS");
+                meter.AgeMs = 501; Check(LevelDisplay.Format(meter, frame, -1) == "—", "stale meter clears"); meter.AgeMs = 0;
+                meter.Index++; Check(LevelDisplay.Format(meter, frame, -1) == "—", "old target reading is not displayed"); meter.Index--;
+                meter.ValidMask = 1; Check(LevelDisplay.Format(meter, frame, -1) == "—", "unavailable channel is not treated as silence"); meter.ValidMask = 3;
+                meter.Values[1] = float.NaN; Check(LevelDisplay.Format(meter, frame, -1) == "—", "non-finite readings rejected");
                 Check(Native.SpectrumRead(engine, out var spectrum, Native.SpectrumBytes) == 1 && spectrum.State == 0, "spectrum ABI and default off");
                 Check(Native.SpectrumRequest(engine, 1, 1, 0, -1) == 0, "demo cannot register a live callback");
                 Check(Native.Edit(engine, -1, 1, Native.Gain, 8) == 1, "managed-to-native edit");
@@ -48,6 +60,19 @@ internal static class SelfTest
                 int before = window.Response.CurveBuilds;
                 Check(window.Response.ActiveScale == DbScale.Presets[0], "default scale is +24 / -54 dB");
                 var unchanged = window.CurrentFrame;
+                ProcessStartInfo? donationRequest = null;
+                window.DonationLauncher = info => donationRequest = info;
+                var donate = (System.Windows.Controls.Button)window.DonationVisual;
+                donate.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+                Check(donationRequest?.FileName == "https://ko-fi.com/msffixit" && donationRequest.UseShellExecute, "Donate opens only the established ElkaSoft HTTPS page (browser mocked)");
+                Check(window.CurrentFrame.Same(unchanged), "Donate does not alter EQ settings");
+                Check(donate.ActualWidth == 104 && donate.ActualHeight == 26 && donate.IsEnabled && donate.Focusable, "compact donation button is visible and keyboard accessible");
+                Check(window.Icon != null, "approved app icon is embedded");
+                var donationBitmap = App.RenderDonationButton(donate);
+                var donationPixels = new byte[donationBitmap.PixelWidth * donationBitmap.PixelHeight * 4];
+                donationBitmap.CopyPixels(donationPixels, donationBitmap.PixelWidth * 4, 0);
+                int orangePixels = Enumerable.Range(0, donationPixels.Length / 4).Count(i => donationPixels[i * 4 + 3] > 240 && donationPixels[i * 4 + 2] > 200 && donationPixels[i * 4 + 1] > 100 && donationPixels[i * 4] < 100);
+                Check(orangePixels > donationPixels.Length / 8, "installer export contains visible orange button pixels");
                 for (int i = 0; i < DbScale.Presets.Length; i++)
                 {
                     window.SetDisplayScale(i); await window.RenderReady();

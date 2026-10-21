@@ -1,7 +1,7 @@
 ELKA VM EQ - DEVELOPER NOTES
 
 Requirements: Windows x64, .NET 8 SDK 8.0.426 or newer 8.0 feature band,
-Visual Studio 2026 C++ desktop tools and CMake, and Inno Setup 6.
+Visual Studio 2026 C++ desktop tools and CMake, and Inno Setup 6.6 or newer.
 Open Elka.VM.EQ.slnx for the WPF startup project and native C engine.
 The original C/GDI executable is retained for development, not shipped as the
 current user-facing release. Source and user data from other Elka apps are not
@@ -13,6 +13,8 @@ The script refreshes the CMake compiler cache to handle Visual Studio updates.
 It runs native CTest suites and the WPF --self-test. No live callback is opened.
 
 Self-contained portable ZIP and installer:
+Artwork exports require Python with Pillow installed.
+  python scripts/Export-Artwork.py
   powershell -NoProfile -File scripts/package-release.ps1
 Use -SkipBuild only after a successful current build/test run.
 Optional -InnoCompiler points to ISCC.exe if it is not in the default location.
@@ -34,6 +36,8 @@ Only publish ZIP and installer assets after these checks pass. Publish the
 generated SHA256SUMS file alongside them. Authenticode signing is not configured.
 
 Diagnostics:
+  ElkaVmEq.exe --level-probe       Read-only level probe; no audio callback.
+  ElkaVmEq.exe --render-donate p   Offline donation-button PNG export.
   ElkaVmEq.exe --demo              Offline controls, no VoiceMeeter connection.
   ElkaVmEq.exe --render image.png  Offline screenshot.
   ElkaVmEq.exe --self-test         Offline integration report beside the EXE.
@@ -43,6 +47,14 @@ Diagnostics:
 The native live callback was connected/released with silent A1 during earlier
 development. That does not establish live audio level or listening validation.
 Do not claim otherwise based on offline FFT or pass-through tests.
+For v0.3.2, the user separately confirmed that a live 500 Hz tone matched
+the live level and RTA display. This is level calibration, not listening proof.
+
+Isolated installer lifecycle validation (separate AppId and Start menu group):
+  powershell -NoProfile -File scripts/Test-Installer.ps1 -PayloadDir "artifacts/releases/v0.3.2/Elka VM EQ"
+This installs only into a unique artifacts/installer-tests directory, verifies
+payload hashes, runs the installed offline self-test, reinstalls, and uninstalls.
+It does not start the live UI or register an audio callback.
 
 References:
 https://learn.microsoft.com/dotnet/core/deploying/single-file/overview

@@ -4,6 +4,14 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Elka.VM.EQ;
 
+[StructLayout(LayoutKind.Sequential, Pack = 4)]
+internal struct LevelFrame
+{
+    public int Edition, Kind, Index, Channels, ValidMask;
+    public uint Sequence, AgeMs;
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)] public float[] Values;
+}
+
 [StructLayout(LayoutKind.Sequential, Pack = 8)]
 internal struct SpectrumFrame
 {
@@ -42,6 +50,9 @@ internal static class Native
     internal const int On = 0, Type = 1, Frequency = 2, Gain = 3, Q = 4;
     internal static readonly int FrameBytes = Marshal.SizeOf<Frame>();
     internal static readonly int SpectrumBytes = Marshal.SizeOf<SpectrumFrame>();
+    internal static readonly int LevelsBytes = Marshal.SizeOf<LevelFrame>();
+    [DllImport(Dll, EntryPoint = "ElkaEq_LevelsSize", CallingConvention = CallingConvention.Cdecl)] internal static extern int LevelsSize();
+    [DllImport(Dll, EntryPoint = "ElkaEq_ReadLevels", CallingConvention = CallingConvention.Cdecl)] internal static extern int ReadLevels(EngineHandle h, out LevelFrame frame, int bytes);
     [DllImport(Dll, EntryPoint = "ElkaEq_SpectrumFrameSize", CallingConvention = CallingConvention.Cdecl)] internal static extern int SpectrumFrameSize();
     [DllImport(Dll, EntryPoint = "ElkaEq_SpectrumRequest", CallingConvention = CallingConvention.Cdecl)] internal static extern int SpectrumRequest(EngineHandle h, int enabled, int kind, int index, int channel);
     [DllImport(Dll, EntryPoint = "ElkaEq_SpectrumRead", CallingConvention = CallingConvention.Cdecl)] internal static extern int SpectrumRead(EngineHandle h, out SpectrumFrame frame, int bytes);
@@ -73,7 +84,7 @@ internal static class Native
     }
     internal static EngineHandle Open(bool demo)
     {
-        if (AbiVersion() != 1 || FrameBytes != FrameSize() || SpectrumBytes != SpectrumFrameSize()) throw new InvalidOperationException("Native EQ DLL and interface versions do not match.");
+        if (AbiVersion() != 1 || FrameBytes != FrameSize() || SpectrumBytes != SpectrumFrameSize() || LevelsBytes != LevelsSize()) throw new InvalidOperationException("Native EQ DLL and interface versions do not match.");
         var handle = Create(demo ? 1 : 0);
         if (handle.IsInvalid) { handle.Dispose(); throw new InvalidOperationException("Could not start the native EQ backend."); }
         return handle;

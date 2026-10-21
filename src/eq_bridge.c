@@ -7,6 +7,10 @@
 typedef struct { VmApi vm; int demo; EqSnapshot memories[2][8][2]; } Engine;
 int __cdecl ElkaEq_AbiVersion(void){return 1;}
 int __cdecl ElkaEq_FrameSize(void){return (int)sizeof(EqSnapshot);}
+int __cdecl ElkaEq_LevelsSize(void){return (int)sizeof(EqLevels);}
+int __cdecl ElkaEq_ReadLevels(EqEngine engine,EqLevels* frame,int bytes){
+ if(!engine||!frame||bytes!=sizeof(*frame))return 0;vm_read_levels(&((Engine*)engine)->vm,frame);return 1;
+}
 int __cdecl ElkaEq_SpectrumFrameSize(void){return (int)sizeof(SpecFrame);}
 int __cdecl ElkaEq_SpectrumRequest(EqEngine engine,int enabled,int kind,int index,int channel){
  Engine* e=engine;if(!e||e->demo||!e->vm.spectrum)return 0;

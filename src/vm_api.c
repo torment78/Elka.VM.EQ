@@ -23,13 +23,36 @@ static int load_api(VmApi* v){
  #define FN(member,name) *(FARPROC*)&v->member=GetProcAddress(v->library,name)
  FN(login,"VBVMR_Login");FN(logout,"VBVMR_Logout");FN(dirty,"VBVMR_IsParametersDirty");
  FN(type,"VBVMR_GetVoicemeeterType");FN(version,"VBVMR_GetVoicemeeterVersion");FN(get,"VBVMR_GetParameterFloat");FN(set,"VBVMR_SetParameterFloat");
+ FN(get_level,"VBVMR_GetLevel");
  #undef FN
  if(v->login&&v->logout&&v->dirty&&v->type&&v->version&&v->get&&v->set)return 1;
  FreeLibrary(v->library);v->library=NULL;return 0;
 }
 static void status(VmApi* v,const char* text,int reset){
  EnterCriticalSection(&v->lock);v->view.ready=0;snprintf(v->view.status,sizeof(v->view.status),"%s",text);
- if(reset){v->count=0;v->view.edition=0;v->generation++;}LeaveCriticalSection(&v->lock);
+ if(reset){v->count=0;v->view.edition=0;v->generation++;v->levels.valid_mask=0;v->level_time=0;v->level_epoch++;}LeaveCriticalSection(&v->lock);
+}
+void vm_read_levels(VmApi* v,EqLevels* out){
+ EnterCriticalSection(&v->lock);*out=v->levels;
+ ULONGLONG age=v->level_time?GetTickCount64()-v->level_time:0xffffffffULL;
+ out->age_ms=age>0xffffffffULL?0xffffffffu:(unsigned)age;
+ LeaveCriticalSection(&v->lock);
+}
+void vm_poll_levels(VmApi* v){
+ EqLevels levels={0};unsigned epoch;
+ EnterCriticalSection(&v->lock);levels.edition=v->view.edition;levels.kind=v->view.kind;levels.index=v->view.index;epoch=v->level_epoch;LeaveCriticalSection(&v->lock);
+ int count=levels.kind==EQ_STRIP?(levels.edition==3?5:levels.edition==2?3:2):(levels.edition==3?8:levels.edition==2?5:2);
+ levels.channels=levels.kind==EQ_STRIP?2:8;
+ if(v->get_level&&levels.edition>=1&&levels.edition<=3&&levels.kind>=0&&levels.kind<=1&&levels.index>=0&&levels.index<count){
+  int offset=levels.index*levels.channels,type=levels.kind==EQ_STRIP?0:3;
+  for(int c=0;c<levels.channels;c++){
+   float amplitude=0;
+   if(v->get_level(type,offset+c,&amplitude)==0&&isfinite(amplitude)&&amplitude>=0){levels.values[c]=amplitude;levels.valid_mask|=1<<c;}
+  }
+ }
+ EnterCriticalSection(&v->lock);
+ if(v->level_epoch==epoch){levels.sequence=v->levels.sequence+1;v->levels=levels;v->level_time=GetTickCount64();}
+ LeaveCriticalSection(&v->lock);
 }
 static int read_snapshot(VmApi* v,EqSnapshot* s){
  char key[128];float val;const char* prefix=s->kind==EQ_STRIP?"Strip":"Bus";
@@ -63,10 +86,11 @@ static DWORD WINAPI worker(void* parameter){
   spec_manage(v->spectrum,v->library,1);
   EqWrite pending[1024];int count,failed=0;EqSnapshot snap;unsigned gen;
   EnterCriticalSection(&v->lock);
-  if(v->view.edition!=edition){v->view.edition=edition;v->view.ready=0;v->count=0;v->generation++;}
+  if(v->view.edition!=edition){v->view.edition=edition;v->view.ready=0;v->count=0;v->generation++;v->levels.valid_mask=0;v->level_epoch++;}
   if(v->view.index>=eq_targets(edition,v->view.kind)){v->view.index=0;v->view.ready=0;v->generation++;}
   v->view.version=version;count=v->count;memcpy(pending,v->queue,count*sizeof(EqWrite));v->count=0;
   snap=v->view;gen=v->generation;LeaveCriticalSection(&v->lock);
+  vm_poll_levels(v);
   for(int i=0;i<count;i++){
    EqWrite* w=&pending[i];char key[128],abkey[80];float bank;
    if(w->edition!=edition||!eq_supported(edition,w->kind)){failed=1;break;}
@@ -106,6 +130,7 @@ void vm_stop(VmApi* v){SetEvent(v->stop);WaitForSingleObject(v->thread,INFINITE)
 void vm_snapshot(VmApi* v,EqSnapshot* out){EnterCriticalSection(&v->lock);*out=v->view;LeaveCriticalSection(&v->lock);}
 void vm_select(VmApi* v,int kind,int index){
  EnterCriticalSection(&v->lock);v->view.kind=kind;v->view.index=index;v->view.ready=0;v->view.channels=kind==EQ_STRIP?2:8;
+ v->levels.valid_mask=0;v->level_time=0;v->level_epoch++;
  v->generation++;v->edit_until=0;v->dragging=0;strcpy_s(v->view.status,sizeof(v->view.status),"Reading selected EQ...");
  LeaveCriticalSection(&v->lock);
 }

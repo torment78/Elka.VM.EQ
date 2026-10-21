@@ -1,0 +1,20 @@
+[
+  {
+    "file": "vm-eq-horizontal-under-1mb.jpg",
+    "bytes": 418026,
+    "pixels": [
+      1774,
+      887
+    ],
+    "jpeg_quality": 94
+  },
+  {
+    "file": "vm-eq-vertical-under-1mb.jpg",
+    "bytes": 417543,
+    "pixels": [
+      1024,
+      1536
+    ],
+    "jpeg_quality": 94
+  }
+]
